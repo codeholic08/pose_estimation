@@ -13,7 +13,7 @@ Requirements:
 - Pillow (PIL)
 
 Usage:
-    python face_landmark_detector_final.py --image A1.jpg --model models/mediapipe_face.onnx
+    python face_landmark_detector_final.py --image A1.jpg
 """
 
 import argparse
@@ -330,11 +330,102 @@ def draw_face_mesh(image: np.ndarray,
     return result_image
 
 
+def detect_face_landmarks(image_path: str, 
+                         model_path: str = 'models/mediapipe_face.onnx',
+                         output_path: Optional[str] = None,
+                         draw_mesh: bool = False,
+                         dot_size: int = 2,
+                         dot_color: Tuple[int, int, int] = (0, 255, 0),
+                         line_color: Tuple[int, int, int] = (255, 0, 0),
+                         line_thickness: int = 1,
+                         verbose: bool = False) -> Optional[str]:
+    """
+    Detect face landmarks and save the result image.
+    
+    Args:
+        image_path: Path to input image
+        model_path: Path to ONNX model (default: 'models/mediapipe_face.onnx')
+        output_path: Path to output image (optional, auto-generated if None)
+        draw_mesh: Whether to draw face mesh connections
+        dot_size: Size of landmark dots
+        dot_color: Color of dots in BGR format
+        line_color: Color of mesh lines in BGR format
+        line_thickness: Thickness of mesh lines
+        verbose: Whether to print verbose output
+        
+    Returns:
+        Path to the output image if successful, None otherwise
+    """
+    # Check if files exist
+    if not os.path.exists(image_path):
+        if verbose:
+            print(f"Error: Image file '{image_path}' not found!")
+        return None
+    
+    if not os.path.exists(model_path):
+        if verbose:
+            print(f"Error: Model file '{model_path}' not found!")
+        return None
+    
+    # Load image
+    if verbose:
+        print(f"Loading image: {image_path}")
+    
+    image = cv2.imread(image_path)
+    if image is None:
+        if verbose:
+            print(f"Error: Could not load image '{image_path}'")
+        return None
+    
+    # Initialize detector
+    if verbose:
+        print(f"Loading model: {model_path}")
+    
+    detector = MediaPipeFaceLandmarkDetector(model_path, verbose=verbose)
+    
+    # Process image
+    if verbose:
+        print("Detecting landmarks...")
+    
+    landmark_points = detector.process_image(image)
+    
+    if landmark_points is not None:
+        if verbose:
+            print(f"Successfully detected {len(landmark_points)} landmarks")
+        
+        # Draw landmarks
+        if draw_mesh:
+            result_image = draw_face_mesh(
+                image, landmark_points, dot_color, line_color, 
+                dot_size, line_thickness
+            )
+        else:
+            result_image = draw_landmarks(image, landmark_points, dot_color, dot_size)
+        
+        # Generate output path if not provided
+        if output_path is None:
+            base_name = os.path.splitext(image_path)[0]
+            suffix = "_mesh" if draw_mesh else "_landmarks"
+            output_path = f"{base_name}{suffix}.jpg"
+        
+        # Save result
+        cv2.imwrite(output_path, result_image)
+        if verbose:
+            print(f"Result saved to: {output_path}")
+        
+        return output_path
+    
+    else:
+        if verbose:
+            print("No landmarks detected in the image.")
+        return None
+
+
 def main():
     """Main function to run face landmark detection."""
     parser = argparse.ArgumentParser(description='MediaPipe Face Landmark Detection')
     parser.add_argument('--image', '-i', required=True, help='Path to input image')
-    parser.add_argument('--model', '-m', required=True, help='Path to ONNX model')
+    parser.add_argument('--model', '-m', default='models/mediapipe_face.onnx', help='Path to ONNX model (default: models/mediapipe_face.onnx)')
     parser.add_argument('--output', '-o', help='Path to output image (optional)')
     parser.add_argument('--dot-size', type=int, default=2, help='Size of landmark dots')
     parser.add_argument('--dot-color', nargs=3, type=int, default=[0, 255, 0], 
@@ -355,6 +446,7 @@ def main():
     
     if not os.path.exists(args.model):
         print(f"Error: Model file '{args.model}' not found!")
+        print(f"Please ensure the MediaPipe face model is at: {args.model}")
         sys.exit(1)
     
     # Load image

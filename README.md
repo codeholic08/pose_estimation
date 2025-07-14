@@ -1,9 +1,14 @@
-# Face Landmark Detection
+# MediaPipe Face Landmark Detection
 
-This repository contains two approaches for detecting face landmarks and adding landmark dots to images:
+This repository contains a production-ready face landmark detection system using MediaPipe ONNX models.
 
-1. **ONNX-based approach** - Uses your local ONNX model directly
-2. **MediaPipe API approach** - Uses MediaPipe's Python API (recommended for beginners)
+## Features
+
+- **468 facial landmarks** detection using MediaPipe ONNX model
+- **Accurate face alignment** with automatic face detection and cropping
+- **Multiple visualization options** (landmark dots, full face mesh)
+- **Production-ready code** with proper error handling
+- **Easy-to-use command-line interface**
 
 ## Installation
 
@@ -13,169 +18,112 @@ Install the required dependencies:
 pip install -r requirements.txt
 ```
 
-## Method 1: ONNX Model Approach
+## Usage
 
-Use this method if you want to work directly with your ONNX model file.
-
-### Usage
+### Basic Landmark Detection
 
 ```bash
-python face_landmark_detector.py --image A1.jpg --model models/mediapipe_face.onnx
+python face_landmark_detector_final.py --image your_image.jpg
 ```
 
-### Options
-
-- `--image, -i`: Path to input image (required)
-- `--model, -m`: Path to ONNX model file (required)
-- `--output, -o`: Path to output image (optional)
-- `--dot-size`: Size of landmark dots (default: 2)
-- `--dot-color`: Color of dots in BGR format (default: [0, 255, 0] - green)
-- `--show-numbers`: Show landmark numbers on the image
-
-### Examples
+### Face Mesh Visualization
 
 ```bash
+python face_landmark_detector_final.py --image your_image.jpg --mesh
+```
+
+### Advanced Options
+
+```bash
+# Custom dot size and colors
+python face_landmark_detector_final.py --image your_image.jpg --dot-size 4 --dot-color 255 0 0
+
+# Face mesh with custom line thickness
+python face_landmark_detector_final.py --image your_image.jpg --mesh --line-thickness 2
+
+# Verbose output
+python face_landmark_detector_final.py --image your_image.jpg --verbose
+
+# No display window (save only)
+python face_landmark_detector_final.py --image your_image.jpg --no-display
+
+# Use custom model path (if needed)
+python face_landmark_detector_final.py --image your_image.jpg --model path/to/your/model.onnx
+```
+
+### Programmatic Usage
+
+You can also use the detection function directly in your Python code:
+
+```python
+from face_landmark_detector_final import detect_face_landmarks
+
 # Basic usage
-python face_landmark_detector.py --image A1.jpg --model models/mediapipe_face.onnx
+output_path = detect_face_landmarks("your_image.jpg")
 
-# Custom output file and red dots
-python face_landmark_detector.py --image A1.jpg --model models/mediapipe_face.onnx --output result.jpg --dot-color 0 0 255
+# With face mesh
+output_path = detect_face_landmarks("your_image.jpg", draw_mesh=True)
 
-# Larger dots with numbers
-python face_landmark_detector.py --image A1.jpg --model models/mediapipe_face.onnx --dot-size 4 --show-numbers
+# With custom parameters
+output_path = detect_face_landmarks(
+    "your_image.jpg", 
+    draw_mesh=True,
+    dot_size=3,
+    dot_color=(255, 0, 0),  # Red dots
+    line_color=(0, 255, 0), # Green lines
+    verbose=True
+)
 ```
 
-## Method 2: MediaPipe API Approach (Recommended)
-
-This method uses MediaPipe's Python API and is generally more reliable and easier to use.
-
-### Usage
-
-```bash
-python mediapipe_face_landmarks.py --image A1.jpg
-```
-
-### Options
+## Command Line Arguments
 
 - `--image, -i`: Path to input image (required)
-- `--output, -o`: Path to output image (optional)
-- `--dot-size`: Size of landmark dots (default: 1)
-- `--dot-color`: Color of dots in BGR format (default: [0, 255, 0] - green)
-- `--style`: Drawing style - 'dots', 'mesh', or 'both' (default: 'dots')
-- `--max-faces`: Maximum number of faces to detect (default: 1)
-- `--confidence`: Minimum detection confidence (default: 0.5)
+- `--model, -m`: Path to ONNX model file (default: models/mediapipe_face.onnx)
+- `--output, -o`: Path to output image (optional, auto-generated if not provided)
+- `--dot-size`: Size of landmark dots (default: 2)
+- `--dot-color`: Color of dots in BGR format (default: [0, 255, 0])
+- `--mesh`: Draw face mesh connections
+- `--line-color`: Color of mesh lines in BGR format (default: [255, 0, 0])
+- `--line-thickness`: Thickness of mesh lines (default: 1)
+- `--verbose, -v`: Verbose output
+- `--no-display`: Don't display result window
 
-### Examples
+## Technical Details
 
-```bash
-# Basic usage - just dots
-python mediapipe_face_landmarks.py --image A1.jpg
-
-# Show full face mesh
-python mediapipe_face_landmarks.py --image A1.jpg --style mesh
-
-# Both dots and mesh with custom colors
-python mediapipe_face_landmarks.py --image A1.jpg --style both --dot-color 255 0 0
-
-# Detect multiple faces with lower confidence
-python mediapipe_face_landmarks.py --image A1.jpg --max-faces 5 --confidence 0.3
-
-# Larger dots for better visibility
-python mediapipe_face_landmarks.py --image A1.jpg --dot-size 3 --dot-color 0 0 255
-```
-
-## Output
-
-Both scripts will:
-1. Display the result image in a window
-2. Save the result image with landmarks to disk
-3. Print detection information to the console
-
-The output filename will be automatically generated based on the input filename:
-- ONNX approach: `A1_landmarks.jpg`
-- MediaPipe approach: `A1_mediapipe_landmarks.jpg`
-
-## Features
-
-### ONNX Approach Features:
-- Direct ONNX model inference
-- Automatic model input/output handling
-- Fallback face detection using OpenCV
-- Customizable dot visualization
-- Support for different model formats
-
-### MediaPipe Approach Features:
-- 468 facial landmarks detection
-- Face mesh visualization with connections
-- Iris landmark detection (if available)
-- Multiple face detection
-- Adjustable confidence thresholds
-- Three visualization styles (dots, mesh, both)
-
-## Troubleshooting
-
-### Common Issues
-
-1. **"No landmarks detected"**
-   - Try lowering the confidence threshold: `--confidence 0.3`
-   - Ensure the face is clearly visible and well-lit
-   - Check if the image contains a face
-
-2. **"Model file not found"**
-   - Verify the path to your ONNX model file
-   - Ensure the model file is in the correct location
-
-3. **"Image file not found"**
-   - Check the image file path
-   - Ensure the image file exists and is readable
-
-4. **Poor landmark detection**
-   - Try different confidence thresholds
-   - Ensure good lighting in the image
-   - Use higher resolution images
-
-### Performance Tips
-
-- For better performance with the ONNX approach, use GPU acceleration if available
-- MediaPipe approach is generally faster and more accurate
-- Use `static_image_mode=True` for single images (default in our script)
-
-## Dependencies
-
-- **opencv-python**: Image processing and visualization
-- **numpy**: Numerical operations
-- **onnxruntime**: ONNX model inference (for ONNX approach)
-- **mediapipe**: Face landmark detection (for MediaPipe approach)
-- **Pillow**: Image handling utilities
+- **Model Input**: 192x192 RGB images (automatically cropped from detected face region)
+- **Model Output**: 468 facial landmarks with (x, y, z) coordinates
+- **Face Detection**: Uses OpenCV's Haar cascade for initial face detection
+- **Coordinate System**: Landmarks are properly transformed from face crop space to original image coordinates
+- **Performance**: Fast inference with ONNX runtime
 
 ## File Structure
 
 ```
 pose_estimation/
-├── face_landmark_detector.py      # ONNX-based approach
-├── mediapipe_face_landmarks.py    # MediaPipe API approach
-├── requirements.txt               # Dependencies
-├── README.md                     # This file
-├── A1.jpg                        # Your input image
+├── face_landmark_detector_final.py  # Main production script
+├── example_usage.py                 # Example usage demonstrations
+├── requirements.txt                  # Dependencies
+├── README.md                        # This file
+├── A1.jpg                           # Sample input image
 └── models/
-    └── mediapipe_face.onnx       # Your ONNX model
+    └── mediapipe_face.onnx          # MediaPipe face landmark model
 ```
 
-## Quick Start
+## Requirements
 
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+- Python 3.7+
+- OpenCV
+- ONNX Runtime
+- NumPy
+- Pillow
 
-2. Run with MediaPipe (recommended):
-   ```bash
-   python mediapipe_face_landmarks.py --image A1.jpg
-   ```
+## License
 
-3. Or run with your ONNX model:
-   ```bash
-   python face_landmark_detector.py --image A1.jpg --model models/mediapipe_face.onnx
-   ```
+This project uses MediaPipe models. Please refer to the original MediaPipe licensing terms.
 
-The result will be displayed and saved automatically! 
+## Notes
+
+- The system automatically detects faces and crops them before landmark detection for optimal accuracy
+- Landmarks are properly aligned with facial features (eyes, nose, mouth, face contour)
+- The face mesh connections follow the official MediaPipe specification
+- Output images are saved in the same directory as the input image by default 
